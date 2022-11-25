@@ -1,0 +1,43 @@
+Realizacja zamówienia usługi internetu radiowego (WISP).
+
+Typy danych:
+- ZamówienieUsługi -> Zapytanie o warunki techniczne w konkretnej lokalizacji przez klienta.
+- ZamówieniePrzyjęte -> przyjęcie zamówienia przez operatora
+- WarunkiPotwierdzoneZdalnie -> Zdalna weryfikacja warunków technicznych np. na podstawie map terenu i stacji bazowych
+- DziałaniePotwierdzoneNaMiejscu -> Weryfikacja działania usługi w fizycznej lokalizacji
+- UsługaUruchomiona -> Usługa zainstalowana u klienta i uruchomiona
+
+4 kroki biznesowe (funkcje):
+- przyjęcieZamówienia -> zawsze zwraca ZamówieniePrzyjęte
+- zdalnaWeryfikacjaWarunków -> zwraca WarunkiPotwierdzoneZdalnie lub Błąd
+- fizycznaWeryfikacjaDziałania -> zwraca DziałaniePotwierdzoneNaMiejscu lub Błąd
+- podpisanieUmowy -> zwraca DziałaniePotwierdzoneNaMiejscu lub Błąd (klient zgadza się na warunki lub nie)
+- instalacjaUsługi -> UsługaUruchomiona lub Błąd
+
+Typy:
+ZamówienieUsługi:
+| lokalizacja: string
+| predkosc: int
+
+ZamówieniePrzyjęte:
+| klientID: int
+| lokalizacja: string
+| odległość: float
+| predkosc: int
+
+WarunkiPotwierdzoneZdalnie:
+| klientID: int
+| lokalizacja: string
+| odleglosc: float
+| predkosc: int
+
+DziałaniePotwierdzoneNaMiejscu:
+| klientID: int
+| lokalizacja: string
+| predkosc: int
+
+UsługaUruchomiona:
+| klientID: int
+| lokalizacja: string
+| abonament: int
+| predkosc: int
