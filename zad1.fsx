@@ -93,7 +93,7 @@ let zad1a() =
     printfn $"\nZadanie 1a:\n\n{validateRequestA zamowienie1}"
     printfn $"{validateRequestA zamowienie2}\n\n"
 
-
+//Zad 1b
 let (>>=) twoTrackInput f =
     bind f twoTrackInput
 
