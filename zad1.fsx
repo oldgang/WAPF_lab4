@@ -19,7 +19,7 @@ type Result<'T,'TError> =
 // przyjęcie zamówienia i nadanie mu losowego id, zawsze ok
 let przyjecieZamowienia (z: ZamowienieUslugi) =
     let r = System.Random()
-    Success {id = r.Next(10000); zamowienie = z}
+    {id = r.Next(10000); zamowienie = z}
 
 // sprawdzenie czy pole lokalizacja nie jest puste i wyznaczenie odległości od infrastruktury (pseudolosowo)
 let walidacjaZamowienia (z: ZamowieniePrzyjete) =
@@ -77,9 +77,12 @@ let bind f =
         | Success z -> f z
         | Error e -> Error e
 
+let map singleTrackFunction =
+    bind (singleTrackFunction >> Success)
+
 //Zad 1a
 let validateRequestA = 
-    przyjecieZamowienia
+    map przyjecieZamowienia
     >> bind walidacjaZamowienia
     >> bind weryfikacjaWarunkowTechnicznych
     >> bind utworzenieOferty
@@ -90,16 +93,16 @@ let zad1a() =
     let zamowienie1 = {lokalizacja = "Gdynia"; predkoscOczekiwana = 300; predkoscMinimalna=80; maksymalnaCena = 650}
     //zawsze błąd
     let zamowienie2 = {lokalizacja = "Kartuzy"; predkoscOczekiwana = 100; predkoscMinimalna=80; maksymalnaCena = 15}
-    printfn $"\nZadanie 1a:\n\n{validateRequestA zamowienie1}"
-    printfn $"{validateRequestA zamowienie2}\n\n"
+    printfn $"\nZadanie 1a:\n\n{validateRequestA (Success zamowienie1)}"
+    printfn $"{validateRequestA (Success zamowienie2)}\n\n"
 
 //Zad 1b
 let (>>=) twoTrackInput f =
     bind f twoTrackInput
 
 let validateRequestB req=
-    req
-    >>= przyjecieZamowienia
+    Success req
+    >>= map przyjecieZamowienia
     >>= walidacjaZamowienia
     >>= weryfikacjaWarunkowTechnicznych
     >>= utworzenieOferty
