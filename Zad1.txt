@@ -12,7 +12,7 @@ Typy danych:
 - zdalnaWeryfikacjaWarunków -> zwraca WarunkiPotwierdzoneZdalnie lub Błąd
 - fizycznaWeryfikacjaDziałania -> zwraca DziałaniePotwierdzoneNaMiejscu lub Błąd
 - podpisanieUmowy -> zwraca DziałaniePotwierdzoneNaMiejscu lub Błąd (klient zgadza się na warunki lub nie)
-- instalacjaUsługi -> UsługaUruchomiona lub Błąd
+- instalacjaUsługi -> zawsze sukces
 
 Typy:
 ZamówienieUsługi:
