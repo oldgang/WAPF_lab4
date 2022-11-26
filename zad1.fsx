@@ -5,7 +5,7 @@ type ZamowieniePrzyjete = {id:int; zamowienie:ZamowienieUslugi}
 
 type ZamowieniePrzetworzone = {id:int; odleglosc:float; zamowienie:ZamowienieUslugi}
 
-type DzialaniePotwierdzone = {id:int; predkoscRzeczywista:int; zamowienie:ZamowienieUslugi;}
+type DzialaniePotwierdzone = {id:int; predkoscOsiągalna:int; zamowienie:ZamowienieUslugi;}
 
 type Oferta = {id:int; predkosc:int; abonament:int; zamowienie:ZamowienieUslugi}
 
@@ -37,13 +37,14 @@ let weryfikacjaWarunkowTechnicznych (z: ZamowieniePrzetworzone) =
     | l when System.String.Equals(l, "Gdynia") || System.String.Equals(l, "Gdańsk")-> 
         match z.odleglosc with
         | o when o > 5 && z.zamowienie.lokalizacja="Gdańsk"-> Error $"Zbyt duża odległość od infrastruktury w lokalizacji {z.zamowienie.lokalizacja}: {o}km"
-        | _ -> Success {id = z.id; zamowienie = z.zamowienie; predkoscRzeczywista = z.zamowienie.predkoscOczekiwana}
+        | _ when z.zamowienie.predkoscOczekiwana <= 300 -> Success {id = z.id; zamowienie = z.zamowienie; predkoscOsiągalna = z.zamowienie.predkoscOczekiwana}
+        | _ -> Success {id = z.id; zamowienie = z.zamowienie; predkoscOsiągalna = 300}
     | _ -> Error $"Brak dostępności usług w tej lokalizacji: {z.zamowienie.lokalizacja}"
 
 // utworzenie oferty dla klienta
 let utworzenieOferty (z:DzialaniePotwierdzone) =
     let parametryUslugi (z: DzialaniePotwierdzone) = 
-        let predkosc = z.predkoscRzeczywista;
+        let predkosc = z.predkoscOsiągalna;
         let maksymalnaCena = z.zamowienie.maksymalnaCena;
         match predkosc with
         | 10 when maksymalnaCena >= 25 -> (10, 25);
@@ -57,14 +58,14 @@ let utworzenieOferty (z:DzialaniePotwierdzone) =
         | _ when z.zamowienie.predkoscMinimalna < int(float maksymalnaCena*(2.0/3.0)) -> (int(float maksymalnaCena*(2.0/3.0)), maksymalnaCena)
         | _ -> (-1, -1)
     
-    if(z.predkoscRzeczywista < z.zamowienie.predkoscMinimalna) then
-        Error "Rzeczywista prędkość mniejsza niż minimalna akceptowalna, nie utworzono oferty"
+    if(z.predkoscOsiągalna < z.zamowienie.predkoscMinimalna) then
+        Error "Maksymalna możliwa prędkość mniejsza niż minimalna akceptowalna, nie utworzono oferty"
     else
         let parametry = parametryUslugi z
         let predkosc = fst parametry
         let abonament = snd parametry
         if parametry = (-1, -1) then
-            Error "Nie można dostarczyć usługi mieszczącej się w podanych parametrach"
+            Error "Nie można dostarczyć usługi mieszczącej się w podanych parametrach, nie utworzono oferty"
         else
         Success {id = z.id; predkosc = predkosc; abonament = abonament; zamowienie = z.zamowienie}
     
@@ -91,10 +92,23 @@ let validateRequestA =
 let zad1a() = 
     //zawsze sukces
     let zamowienie1 = {lokalizacja = "Gdynia"; predkoscOczekiwana = 300; predkoscMinimalna=80; maksymalnaCena = 650}
-    //zawsze błąd
-    let zamowienie2 = {lokalizacja = "Kartuzy"; predkoscOczekiwana = 100; predkoscMinimalna=80; maksymalnaCena = 15}
     printfn $"\nZadanie 1a:\n\n{validateRequestA (Success zamowienie1)}"
+    // Error "Nie podano lokalizacji"
+    let zamowienie2 = {lokalizacja = ""; predkoscOczekiwana = 100; predkoscMinimalna=80; maksymalnaCena = 15}
     printfn $"{validateRequestA (Success zamowienie2)}\n\n"
+    // Error "Nie podano maksymalnej kwoty abonamentu"
+    let zamowienie3 = {lokalizacja = "Gdynia"; predkoscOczekiwana = 100; predkoscMinimalna=80; maksymalnaCena = 0}
+    printfn $"{validateRequestA (Success zamowienie3)}\n\n"
+    // Error $"Brak dostępności usług w tej lokalizacji: {z.zamowienie.lokalizacja}"
+    let zamowienie4 = {lokalizacja = "Banino"; predkoscOczekiwana = 100; predkoscMinimalna=25; maksymalnaCena = 110}
+    printfn $"{validateRequestA (Success zamowienie4)}\n\n"
+    // Error "Maksymalna możliwa prędkość mniejsza niż minimalna akceptowalna, nie utworzono oferty"
+    let zamowienie5 = {lokalizacja = "Gdynia"; predkoscOczekiwana = 600; predkoscMinimalna=450; maksymalnaCena = 500}
+    printfn $"{validateRequestA (Success zamowienie5)}\n\n"
+    // Error "Nie można dostarczyć usługi mieszczącej się w podanych parametrach, nie utworzono oferty"
+    let zamowienie5 = {lokalizacja = "Gdynia"; predkoscOczekiwana = 300; predkoscMinimalna=150; maksymalnaCena = 50}
+    printfn $"{validateRequestA (Success zamowienie5)}\n\n"
+
 
 //Zad 1b
 let (>>=) twoTrackInput f =
@@ -110,15 +124,21 @@ let validateRequestB req=
 
 let zad1b() =
     //zawsze sukces
-    let zamowienie3 = {lokalizacja = "Gdynia"; predkoscOczekiwana = 300; predkoscMinimalna=80; maksymalnaCena = 650}
-    //zawsze błąd
-    let zamowienie4 = {lokalizacja = "Kartuzy"; predkoscOczekiwana = 100; predkoscMinimalna=80; maksymalnaCena = 15}
-    printfn $"\nZadanie 1b:\n\n{validateRequestB (Success zamowienie3)}"
-    printfn $"{validateRequestB (Success zamowienie4)}\n\n"
-
-let zad1c() =
-    None
+    let zamowienie1 = {lokalizacja = "Gdynia"; predkoscOczekiwana = 300; predkoscMinimalna=80; maksymalnaCena = 650}
+    printfn $"\nZadanie 1b:\n\n{validateRequestB (Success zamowienie1)}"
+    let zamowienie2 = {lokalizacja = "Kartuzy"; predkoscOczekiwana = 100; predkoscMinimalna=80; maksymalnaCena = 15}
+    printfn $"{validateRequestB (Success zamowienie2)}\n\n"
 
 zad1a()
 zad1b()
-//zad1c()
+
+
+
+// Podsumowanie
+//////////////////////
+// Dawid Łabaty 175473
+// Zrealizowane zadania: Zad1 a, b
+// Przepływy z zadania pierwszego uruchamiane są za pomocą funkcji zad1a(), zad1b() - odpowiednio dla każdego z podpunktów.
+// W funkcji zad1a() zawarto wywołanie poszczególnych błędów, za wyjątkiem jednego:
+//      Error $"Zbyt duża odległość od infrastruktury w lokalizacji" jest wywoływany tylko gdy generator losowy wygeneruje
+//              dystans dłuższy niż 5 dla lokalizacji Gdańsk (funkcja weryfikacjaWarunkowTechnicznych)
